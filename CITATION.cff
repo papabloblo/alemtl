@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use ALE-MTL in your research, please cite the software and the accompanying SoftwareX article when available."
+type: software
+title: "ALE-MTL: Accumulated Local Effects for Multi-task Learning"
+version: "0.1.0"
+license: "BSD-3-Clause"
+authors:
+  - name: "ALE-MTL contributors"
+abstract: >-
+  ALE-MTL is a Python/PyTorch toolkit for building, training, explaining, and
+  comparing multi-task learning models. The software computes task-wise
+  Accumulated Local Effects profiles and estimates task relationships using
+  curve similarity, including Frechet-based similarity scores.
+keywords:
+  - "accumulated local effects"
+  - "explainable artificial intelligence"
+  - "Frechet distance"
+  - "multi-task learning"
+  - "PyTorch"
+  - "task similarity"
+repository-code: "https://github.com/papabloblo/alemtl"
+
+# Before the SoftwareX release, replace the contributor placeholder above with
+# the final author list and add:
+
+# doi: "<Zenodo software archive DOI>"
+# date-released: "YYYY-MM-DD"
+# preferred-citation:
+#   type: article
+#   title: "<SoftwareX article title>"
+#   authors:
+#     - family-names: "<Family name>"
+#       given-names: "<Given names>"
+#   journal: "SoftwareX"
+#   year: 2026
+#   doi: "<SoftwareX article DOI>"

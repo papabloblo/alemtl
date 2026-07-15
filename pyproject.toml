@@ -1,0 +1,91 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alemtl"
+version = "0.1.0"
+description = "Accumulated Local Effects and Frechet task similarity for multi-task learning."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt"]
+# TODO: Replace these placeholder people with the final author and maintainer
+# metadata before tagging the SoftwareX release.
+authors = [
+    { name = "Pablo Hidalgo", email = "pablohigar@gmail.com" },
+]
+maintainers = [
+    { name = "Pablo Hidalgo", email = "pablohigar@gmail.com" },
+]
+keywords = [
+    "accumulated-local-effects",
+    "explainable-ai",
+    "frechet-distance",
+    "multi-task-learning",
+    "pytorch",
+    "task-similarity",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "numpy>=1.23",
+    "pandas>=1.5",
+    "Pillow>=9.0",
+    "scikit-learn>=1.2",
+    "scipy>=1.9",
+    "torch>=2.0",
+    "torchvision>=0.15",
+]
+
+[project.urls]
+# TODO: Replace these valid placeholder URLs with the final public project URLs.
+Homepage = "https://github.com/papabloblo/alemtl"
+Repository = "https://github.com/papabloblo/alemtl"
+Documentation = "https://papabloblo.github.io/alemtl/"
+"Bug Tracker" = "https://github.com/papabloblo/alemtl/issues"
+Changelog = "https://github.com/papabloblo/alemtl/releases"
+"Archived Release" = "https://doi.org/10.0000/zenodo.todo"
+
+[project.optional-dependencies]
+dev = [
+    "build>=1.0",
+    "pytest>=7.0",
+    "twine>=4.0",
+]
+docs = [
+    "Sphinx>=7.0",
+]
+notebooks = [
+    "ipykernel>=6.0",
+    "jupyterlab>=4.0",
+]
+publication = [
+    "build>=1.0",
+    "ipykernel>=6.0",
+    "jupyterlab>=4.0",
+    "matplotlib>=3.7",
+    "pytest>=7.0",
+    "Sphinx>=7.0",
+    "twine>=4.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["alemtl*"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+pythonpath = [".", "src"]
+testpaths = ["tests"]

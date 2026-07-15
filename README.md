@@ -1,0 +1,260 @@
+# ALE-MTL: Accumulated Local Effects for Multi-task Learning
+
+ALE-MTL is a Python/PyTorch toolkit for building, training, explaining, and
+comparing multi-task learning models. The software focuses on a workflow where
+task-specific model behavior is summarized with Accumulated Local Effects (ALE)
+profiles and task relationships are estimated with curve similarity, including a
+Frechet-based similarity score.
+
+ALEMTL is a Python library for computing interpretable ALE–Fréchet
+task similarities and integrating them into deep multi-task learning
+workflows.
+
+## Statement of Need
+
+Multi-task learning (MTL) models can share representations across related tasks,
+but deciding which tasks should share parameters is often treated as a fixed
+design choice. ALE-MTL provides reusable software components for:
+
+- constructing hard-shared and soft-shared MTL architectures;
+- computing task-wise ALE profiles on a selected model slice;
+- comparing task behavior from ALE curves;
+- using similarity-derived task groups during training regularization;
+- benchmarking against common MTL baselines.
+
+The package is designed for experiments where researchers need both predictive
+models and interpretable task relationship estimates.
+
+## Main Features
+
+- **Composable multitask models**: hard-shared modules, soft-shared modules, and
+  per-task model views.
+- **Task-first data contract**: batches follow `(n_tasks, batch, features)` and
+  outputs follow `(n_tasks, batch, outputs)`.
+- **ALE profile computation**: interval construction, perturbation generation,
+  local-effect accumulation, centering, standardization, and optional spline
+  smoothing.
+- **Task similarity**: vectorized discrete Frechet curve comparison and nearest
+  task grouping.
+- **Training utilities**: per-task loss tracking, similarity-weighted
+  regularization, ALE/similarity scheduling, early stopping, and checkpointable
+  metrics.
+- **Baseline models**: soft sharing, single-task MLP, hard sharing, MMoE,
+  Cross-Stitch, PLE, and MTAN-style tabular baselines.
+- **Executable examples and notebooks** for reproducible demonstrations.
+
+## Repository Layout
+
+```text
+src/alemtl/
+├── data/          # multitask datasets and task-first dataloader wrapper
+├── models/        # composable MultiTaskModel and baseline MTL models
+├── similarity/    # ALE computation and task similarity
+└── training/      # loss, trainer, and tracking utilities
+
+examples/          # runnable scripts
+notebooks/         # guided workflows
+docs/              # Sphinx documentation
+scripts/           # Dataset download and preprocessing utilities
+tests/             # pytest regression tests
+```
+
+## Installation
+
+The project uses a standard `src/` layout and can be installed in editable mode
+from the repository root.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -e ".[publication]"
+```
+
+Validate the installation:
+
+```bash
+pytest -q
+```
+
+The test suite should complete without failures.
+
+## Quick Start
+
+Create a synthetic multitask dataset and inspect the task-first batch contract:
+
+```bash
+python -m examples.quickstart_multisine
+```
+
+Build a small `MultiTaskModel`:
+
+```bash
+python -m examples.multitask_model_layout
+```
+
+Compute ALE profiles:
+
+```bash
+python -m examples.compute_ale_profiles
+```
+
+Compute task similarity from ALE curves:
+
+```bash
+python -m examples.compute_task_similarity
+```
+
+Run a tiny ALE-Frechet training workflow:
+
+```bash
+python -m examples.train_alefrechet
+```
+
+Compare baseline model forward contracts:
+
+```bash
+python -m examples.compare_baselines
+```
+
+## Minimal Python Example
+
+```python
+import torch
+from torch import nn
+
+from alemtl.models import MultiTaskModel
+from alemtl.similarity import MultiTaskALE, MultitaskSimilarity
+
+model = MultiTaskModel(
+    n_tasks=3,
+    modules_layout={
+        "encoder": {
+            "shared": "hard",
+            "module": lambda: nn.Sequential(nn.Linear(2, 8), nn.ReLU()),
+        },
+        "head": {
+            "shared": "soft",
+            "module": lambda: nn.Linear(8, 1),
+        },
+    },
+    similarity_layers={"in": "encoder", "out": "head"},
+)
+
+batches = [
+    (torch.randn(3, 32, 2), torch.randn(3, 32, 1))
+    for _ in range(6)
+]
+
+ale = MultiTaskALE(
+    model=model,
+    dataloader=batches,
+    n_tasks=3,
+    n_features_out=1,
+    num_intervals=10,
+)
+ale.update()
+curves = ale(centered=True, cumulative=True, std=1.0)
+
+similarity = MultitaskSimilarity(ale)
+similarity.compute()
+scores, task_pairs = similarity.tasks_groups()
+
+print(curves.shape)       # (tasks, features, intervals, x_plus_outputs)
+print(similarity.scores)
+print(task_pairs)
+```
+
+## Notebooks
+
+The notebooks are designed as guided, executable companions to the examples:
+
+- `notebooks/01_quickstart_synthetic.ipynb`: synthetic data and task-first
+  dataloading.
+- `notebooks/02_task_similarity_matrix.ipynb`: ALE profiles and Frechet task
+  similarity matrix.
+- `notebooks/03_training_with_alefrechet.ipynb`: training with scheduled ALE and
+  similarity-derived task groups.
+
+Launch them with:
+
+```bash
+jupyter lab notebooks/
+```
+
+## Documentation
+
+The user guide and API reference are built with Sphinx:
+
+```bash
+pip install -e ".[docs]"
+sphinx-build -b html docs docs/_build/html
+```
+
+The generated HTML documentation is written to `docs/_build/html`.
+
+## Testing
+
+Run the full regression suite:
+
+```bash
+pytest -q
+```
+
+The tests cover:
+
+- dataset and dataloader behavior;
+- model layout and task-specific parameter utilities;
+- ALE interval indexing and accumulation;
+- Frechet task similarity;
+- loss and metric helpers;
+- tracking and trainer workflows.
+
+## SoftwareX Publication Metadata
+
+These fields should be finalized before submission:
+
+- **Software name**: ALE-MTL
+- **Repository**: https://github.com/papabloblo/alemtl
+- **Archive DOI**: TODO: create release archive, e.g. Zenodo
+- **License**: BSD-3-Clause
+- **Version**: TODO: tag a release version
+- **Authors**: TODO: add author list and affiliations
+- **Citation**: `CITATION.cff` provides software citation metadata
+- **Packaging**: `pyproject.toml` provides editable and wheel installs
+- **Documentation**: `docs/` provides Sphinx source files
+
+## License
+
+ALE-MTL is distributed under the BSD 3-Clause License. See `LICENSE.txt` for the
+full license text.
+
+## Reproducibility Notes
+
+- All examples use synthetic data and fixed random seeds where practical.
+- The default examples avoid filesystem logging and external datasets.
+- The current verified command is:
+
+```bash
+pytest -q
+```
+
+## Contributing
+
+For development, keep changes covered by focused tests in `tests/` and prefer
+small examples in `examples/` for user-facing workflows. Before opening a
+release candidate for SoftwareX, run:
+
+```bash
+pytest -q
+sphinx-build -b html docs docs/_build/html
+python -m examples.compute_task_similarity
+python -m examples.train_alefrechet
+```
+
+## Citation
+
+If you use ALE-MTL before a formal release is available, cite the repository and
+the accompanying SoftwareX manuscript draft. A machine-readable citation file
+is available in `CITATION.cff`; the final SoftwareX article DOI and release DOI
+should be added before publication.
