@@ -68,7 +68,7 @@ from the repository root.
 python -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
-pip install -e ".[publication]"
+pip install .
 ```
 
 Validate the installation:
@@ -210,19 +210,7 @@ The tests cover:
 - loss and metric helpers;
 - tracking and trainer workflows.
 
-## SoftwareX Publication Metadata
 
-These fields should be finalized before submission:
-
-- **Software name**: ALE-MTL
-- **Repository**: https://github.com/papabloblo/alemtl
-- **Archive DOI**: TODO: create release archive, e.g. Zenodo
-- **License**: BSD-3-Clause
-- **Version**: TODO: tag a release version
-- **Authors**: TODO: add author list and affiliations
-- **Citation**: `CITATION.cff` provides software citation metadata
-- **Packaging**: `pyproject.toml` provides editable and wheel installs
-- **Documentation**: `docs/` provides Sphinx source files
 
 ## License
 
@@ -254,7 +242,11 @@ python -m examples.train_alefrechet
 
 ## Citation
 
-If you use ALE-MTL before a formal release is available, cite the repository and
-the accompanying SoftwareX manuscript draft. A machine-readable citation file
-is available in `CITATION.cff`; the final SoftwareX article DOI and release DOI
-should be added before publication.
+When using ALEMTL, cite the archived software release:
+
+Hidalgo, P., Rodriguez, D., and Domínguez-Díaz, A. (2026).
+ALEMTL: A PyTorch package for explainable similarity-driven
+multi-task learning, version 0.1.0. Zenodo.
+https://doi.org/10.5281/zenodo.[VERSION DOI]
+
+The machine-readable citation is available in `CITATION.cff`.
