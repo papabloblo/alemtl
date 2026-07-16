@@ -13,10 +13,10 @@ license-files = ["LICENSE.txt"]
 # TODO: Replace these placeholder people with the final author and maintainer
 # metadata before tagging the SoftwareX release.
 authors = [
-    { name = "Pablo Hidalgo", email = "pablohigar@gmail.com" },
+    { name = "Pablo Hidalgo", email = "pablo.hidalgo@ufv.es" },
 ]
 maintainers = [
-    { name = "Pablo Hidalgo", email = "pablohigar@gmail.com" },
+    { name = "Pablo Hidalgo", email = "pablo.hidalgo@ufv.es" },
 ]
 keywords = [
     "accumulated-local-effects",
