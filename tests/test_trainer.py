@@ -27,6 +27,11 @@ def _loader():
 
 def _trainer(**kwargs) -> MultiTaskTrainer:
     model = _model()
+    trainer_kwargs = {
+        "print_each_epochs": 100,
+        "logging_dir": "",
+    }
+    trainer_kwargs.update(kwargs)
     return MultiTaskTrainer(
         model=model,
         train_dataloader=_loader(),
@@ -34,9 +39,7 @@ def _trainer(**kwargs) -> MultiTaskTrainer:
         test_dataloader=_loader(),
         optimizer=torch.optim.SGD(model.parameters(), lr=0.01),
         loss=MultiTaskLoss(model=model, loss_fn=nn.MSELoss(reduction="none")),
-        print_each_epochs=100,
-        logging_dir="",
-        **kwargs,
+        **trainer_kwargs,
     )
 
 
@@ -50,6 +53,24 @@ def test_trainer_runs_one_epoch_without_logging_dir(capsys):
     assert len(trainer.tracking.track["train"]["metrics"].batch_counts) == 1
     assert len(trainer.tracking.track["test"]["metrics"].batch_counts) == 1
     capsys.readouterr()
+
+
+def test_trainer_metric_table_uses_aligned_borders(capsys):
+    trainer = _trainer(print_each_epochs=1)
+
+    trainer.train(epochs=1, max_batches=1)
+
+    output = capsys.readouterr().out
+    lines = output.splitlines()
+    table_start = next(index for index, line in enumerate(lines) if "METRICS" in line) - 1
+    table_end = next(
+        index for index in range(table_start, len(lines))
+        if lines[index].startswith("+-----------------+")
+    )
+    table_lines = [line for line in lines[table_start:table_end] if line]
+
+    assert len({len(line) for line in table_lines}) == 1
+    assert all(line.startswith(("+", "|")) for line in table_lines)
 
 
 class DummySimilarity:

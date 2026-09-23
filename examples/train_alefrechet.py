@@ -95,7 +95,7 @@ def main() -> None:
         ale_each_epochs=1,
         similarity_each_epochs=1,
         keep_similarity_epochs=1,
-        print_each_epochs=2,
+        print_each_epochs=1,
         print_limit_epochs=2,
         logging_dir="",
         learning_type="ALE-Frechet soft sharing",

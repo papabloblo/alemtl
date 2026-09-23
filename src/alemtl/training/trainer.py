@@ -234,24 +234,59 @@ class _MultiTaskTrainerPrint:
             from_epoch: Inclusive starting epoch index to print.
             to_epoch: Inclusive ending epoch index to print.
         """
-        header = f"|  {' ':^8}  |" + "".join(f"  {m:^19}  |" for m in metric_names)
-        separator = "-" * len(header)
-        print("+-----------+")
-        print("|  METRICS  |")
-        print(separator)
+        epoch_width = 8
+        value_width = 10
+        metric_width = 2 * value_width + 3
+
+        top_separator = (
+            "+"
+            + "-" * (epoch_width + 2)
+            + "+"
+            + "+".join("-" * (metric_width + 2) for _ in metric_names)
+            + "+"
+        )
+        separator = (
+            "+"
+            + "-" * (epoch_width + 2)
+            + "+"
+            + "+".join(
+                "+".join("-" * (value_width + 2) for _ in range(2))
+                for _ in metric_names
+            )
+            + "+"
+        )
+        title_width = len(top_separator) - 4
+        header = f"| {'':^{epoch_width}} |" + "".join(
+            f" {metric:^{metric_width}} |" for metric in metric_names
+        )
+        header2 = f"| {'EPOCH':^{epoch_width}} |" + "".join(
+            f" {'Train':^{value_width}} | {'Validation':^{value_width}} |"
+            for _ in metric_names
+        )
+
+        print(top_separator)
+        print(f"| {'METRICS':^{title_width}} |")
+        print(top_separator)
         print(header)
         print(separator)
-        header2 = f"|  {'EPOCH':^8}  |" + f"  {'Train':^8} | {'Validation':^8}  |" * len(metric_names)
         print(header2)
         print(separator)
         for ep in range(from_epoch, to_epoch + 1):
-            if similarity_each_epochs is not None and ep % similarity_each_epochs == 0:
+            if (
+                    ep > from_epoch
+                    and similarity_each_epochs is not None
+                    and (ep + 1) % similarity_each_epochs == 0
+            ):
                 print(separator)
-            print(f"|  {ep + 1:^8}  |", end="")
+            print(f"| {ep + 1:^{epoch_width}} |", end="")
             mtr_train = track['train']['metrics'].info(ep)
             mtr_val = track['validation']['metrics'].info(ep)
             for m in metric_names:
-                print(f"  {mtr_train[m]:^8.4f} | {mtr_val[m]:^8.4f}  |", end="")
+                print(
+                    f" {float(mtr_train[m]):^{value_width}.4f} "
+                    f"| {float(mtr_val[m]):^{value_width}.4f} |",
+                    end="",
+                )
             print()
         print(separator)
         print()
