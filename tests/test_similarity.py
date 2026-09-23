@@ -1,3 +1,5 @@
+import math
+
 import torch
 import pytest
 
@@ -5,7 +7,66 @@ from alemtl.similarity.similarity import (
     MultitaskSimilarity,
     discrete_frechet_distance_vectorized,
     frechet_distance_vectorized,
+    frechet_similarity_vectorized,
 )
+
+
+def _reference_discrete_frechet(curve0, curve1):
+    """Scalar row-by-row reference, independent of the vectorized recurrence."""
+    distances = [[0.0 for _ in curve1] for _ in curve0]
+    for i, point0 in enumerate(curve0):
+        for j, point1 in enumerate(curve1):
+            distance = math.dist(point0, point1)
+            if i == 0 and j == 0:
+                distances[i][j] = distance
+            elif i == 0:
+                distances[i][j] = max(distance, distances[i][j - 1])
+            elif j == 0:
+                distances[i][j] = max(distance, distances[i - 1][j])
+            else:
+                distances[i][j] = max(
+                    distance,
+                    min(distances[i - 1][j], distances[i][j - 1], distances[i - 1][j - 1]),
+                )
+    return distances[-1][-1]
+
+
+@pytest.mark.parametrize("swap_curves", [False, True])
+def test_discrete_frechet_includes_starting_distance(swap_curves):
+    curve0 = torch.tensor([[0.0, 0.0], [1.0, 10.0]])
+    curve1 = torch.tensor([[0.0, 10.0], [1.0, 10.0]])
+    if swap_curves:
+        curve0, curve1 = curve1, curve0
+
+    expected = torch.tensor(10.0)
+    torch.testing.assert_close(discrete_frechet_distance_vectorized(curve0, curve1), expected)
+    for similarity_fn in (frechet_similarity_vectorized, frechet_distance_vectorized):
+        torch.testing.assert_close(similarity_fn(curve0, curve1), torch.exp(-expected))
+
+
+@pytest.mark.parametrize("n_points", [1, 2, 3, 7])
+@pytest.mark.parametrize("batched", [False, True])
+@pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
+def test_discrete_frechet_matches_reference_and_endpoint_bounds(n_points, batched, dtype):
+    generator = torch.Generator().manual_seed(42)
+    curves0 = torch.randn(5, n_points, 2, generator=generator, dtype=dtype)
+    curves1 = torch.randn(5, n_points, 2, generator=generator, dtype=dtype)
+    expected = torch.tensor(
+        [_reference_discrete_frechet(a, b) for a, b in zip(curves0.tolist(), curves1.tolist())],
+        dtype=dtype,
+    )
+    if not batched:
+        curves0, curves1, expected = curves0[0], curves1[0], expected[0]
+
+    actual = discrete_frechet_distance_vectorized(curves0, curves1)
+
+    assert actual.shape == expected.shape
+    assert actual.dtype == dtype
+    torch.testing.assert_close(actual, expected)
+    torch.testing.assert_close(discrete_frechet_distance_vectorized(curves1, curves0), actual)
+    endpoint_distances = torch.linalg.vector_norm(curves0[..., [0, -1], :] - curves1[..., [0, -1], :], dim=-1)
+    tolerance = 10 * torch.finfo(dtype).eps
+    assert torch.all(actual.unsqueeze(-1) + tolerance >= endpoint_distances)
 
 
 class DummyALE:

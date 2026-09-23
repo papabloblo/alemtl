@@ -90,10 +90,9 @@ def discrete_frechet_distance_vectorized(curve0: torch.Tensor, curve1: torch.Ten
     )
     dp = torch.empty_like(pairwise_distances)
 
-    dp[:, 0, 0] = pairwise_distances[:, 0, 0]
-    if m > 1:
-        dp[:, 0, 1:] = torch.cummax(pairwise_distances[:, 0, 1:], dim=-1).values
-        dp[:, 1:, 0] = torch.cummax(pairwise_distances[:, 1:, 0], dim=1).values
+    # Every boundary path includes the starting pair, including its distance.
+    dp[:, 0, :] = torch.cummax(pairwise_distances[:, 0, :], dim=-1).values
+    dp[:, :, 0] = torch.cummax(pairwise_distances[:, :, 0], dim=1).values
 
     for i_idx, j_idx in _precompute_indices(m, device=curve0.device):
         previous = torch.minimum(
