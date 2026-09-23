@@ -634,9 +634,8 @@ class MultiTaskALE:
     def _reinit(self) -> tuple[Tensor, Tensor, list[Intervals], int]:
         """Create fresh intervals and zero-filled accumulators.
 
-        This is called by ``__init__``. It can also be useful during debugging
-        if you want to discard all accumulated effects and rebuild intervals
-        from the dataloader's current data distribution.
+        Used by initialization and :meth:`reset`. The caller installs the
+        returned state on this object.
         """
         intervals, n_features_in = self._initialize_intervals()
 
@@ -713,6 +712,43 @@ class MultiTaskALE:
     # --------------------------- update ---------------------------
 
     @torch.no_grad()
+    def reset(self) -> None:
+        """Discard effects/counts and rebuild intervals for the current model.
+
+        Samples the dataloader again, including the current model prefix when
+        explaining latent features. No local effects are computed. Use
+        :meth:`recompute` for a complete fresh explanation in evaluation mode.
+        """
+        self.g_ale_per_feature, self.cardinality, self.intervals, self.n_features_in = self._reinit()
+
+    @torch.no_grad()
+    def recompute(self, max_batches: Optional[int] = None) -> None:
+        """Replace the accumulated ALE with an explanation of the current model.
+
+        Rebuilds intervals, clears effects and counts, then processes at most
+        ``max_batches`` batches (all batches when ``None``). Interval sampling
+        still uses ``n_guess`` samples, independently of this limit. The
+        dataloader must be re-iterable.
+
+        Computation runs in evaluation mode, so dropout and batch-normalization
+        updates do not alter the explanation. Each module's original training
+        flag is restored even if computation fails. Read the result with
+        ``ale(...)`` as usual. Unlike :meth:`update`, this method never mixes
+        effects from earlier model states.
+        """
+        if max_batches is not None and max_batches < 0:
+            raise ValueError("max_batches must be non-negative or None.")
+
+        training_modes = [(module, module.training) for module in self.model.modules()]
+        try:
+            self.model.eval()
+            self.reset()
+            self.update(max_batches=max_batches)
+        finally:
+            for module, training in training_modes:
+                module.training = training
+
+    @torch.no_grad()
     def update(self, max_batches: Optional[int] = None) -> None:
         """Accumulate ALE local effects over batches from the dataloader.
 
@@ -725,9 +761,10 @@ class MultiTaskALE:
         Side effects
         ------------
         Updates ``g_ale_per_feature`` and ``cardinality`` in place. Repeated
-        calls keep accumulating; they do not reset previous values. Construct a
-        new ``MultiTaskALE`` object, or call the private ``_reinit`` manually, if
-        you need fresh accumulators.
+        calls keep accumulating; they do not reset previous values. Use this
+        only while the model is unchanged. Use :meth:`recompute` after model
+        parameters change, or :meth:`reset` to rebuild empty accumulators and
+        intervals without computing effects.
 
         Examples
         --------

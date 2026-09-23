@@ -30,6 +30,20 @@ interval, accumulates local effects, and returns task-wise ALE curves. These
 curves can be centered, accumulated, standardized, or smoothed depending on the
 comparison workflow.
 
+Use ``ale.recompute()`` to explain the current model after training or changing
+its parameters. This rebuilds intervals in the current input or latent feature
+space, clears previous effects and counts, and computes fresh curves in
+evaluation mode. The original module training modes are restored afterward.
+``ale.recompute(max_batches=2)`` limits the effect computation for a preview;
+interval initialization still samples according to ``n_guess``.
+
+``ale.update()`` remains an incremental operation for an unchanged model.
+``ale.reset()`` rebuilds intervals and clears accumulators without computing
+effects. Scheduled trainer updates use ``recompute()`` so task similarities do
+not mix explanations from different training epochs. Previously generated
+training results that used accumulated historical effects must be regenerated
+to reflect this behavior.
+
 Compare Tasks and Train
 -----------------------
 

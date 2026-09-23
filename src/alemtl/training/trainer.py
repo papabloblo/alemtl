@@ -654,8 +654,9 @@ class MultiTaskTrainer:
     def ale_step(self, epoch: int) -> None:
         """Optionally computes and records ALE curves at a scheduled frequency.
 
-        If ``ale_each_epochs`` is set and ``ale`` is provided, this updates and
-        stores ALE curves in the ``Tracker`` for the current epoch.
+        If ``ale_each_epochs`` is set and ``ale`` is provided, this recomputes
+        intervals and effects from the current model and stores the curves in
+        the ``Tracker``. Effects from previous epochs are discarded.
 
         Args:
             epoch: Zero-based current epoch index.
@@ -663,7 +664,7 @@ class MultiTaskTrainer:
         self.tracking.start_ale()
         try:
             if self._is_scheduled(epoch, self.ale_each_epochs) and self.ale is not None:
-                self.ale.update()
+                self.ale.recompute()
                 self.tracking.end_ale(epoch, self.ale())
             else:
                 self.tracking.end_ale()
