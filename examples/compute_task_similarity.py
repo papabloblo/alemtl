@@ -9,7 +9,10 @@ import torch
 
 from alemtl.similarity import MultiTaskALE, MultitaskSimilarity
 
-from compute_ale_profiles import build_model, make_batches
+try:
+    from .compute_ale_profiles import build_model, make_batches
+except ImportError:
+    from compute_ale_profiles import build_model, make_batches
 
 SEED = 5
 N_TASKS = 3
