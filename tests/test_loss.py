@@ -74,3 +74,22 @@ def test_regression_losses_reduce_batch_axis():
     torch.testing.assert_close(mae_loss(real, pred), torch.tensor([[1.5], [2.0]]))
     torch.testing.assert_close(rmse_loss(real, pred), torch.tensor([[1.5811], [2.2361]]), rtol=1e-4, atol=1e-4)
     torch.testing.assert_close(mape_loss(real, pred), torch.tensor([[1.0], [0.625]]))
+
+
+def test_epoch_rmse_aggregates_all_outputs_before_taking_root():
+    from alemtl.training.tracking import TrackMetrics
+
+    loss = MultiTaskLoss(DummyModel(), rmse_loss, errors_fn={"score": rmse_loss})
+    real = torch.zeros(2, 3, 2)
+    pred = torch.tensor([[[0., 10.], [0., 10.], [3., 4.]],
+                         [[1., 2.], [3., 4.], [5., 6.]]])
+    metrics = TrackMetrics(["score"], loss_aggregation=loss.loss_aggregation,
+                           errors_aggregation=loss.errors_aggregation)
+    metrics.new_epoch()
+    for start, end in ((0, 2), (2, 3)):
+        y, p = real[:, start:end], pred[:, start:end]
+        values, errors = loss.epoch_values(y, p, loss.loss_per_task(y, p), loss.errors_per_task(y, p))
+        metrics.update(values, errors, torch.zeros(2), batch_size=end - start)
+    expected = pred.square().mean(dim=(1, 2)).sqrt()
+    torch.testing.assert_close(metrics.for_save()["errors"]["score"][0], expected)
+    torch.testing.assert_close(metrics.info(0)["LOSS"], expected.mean())

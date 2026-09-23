@@ -69,14 +69,21 @@ class TrackALE_Similarity:
 
 
 class TrackMetrics:
-    """Accumulate batch metrics and expose epoch means."""
+    """Accumulate sample-weighted metrics; RMSE inputs must be batch MSEs."""
 
     def __init__(
         self,
         errors_names: list[str],
         device: str | torch.device = "cpu",
         keep_epochs: Optional[int] = None,
+        *,
+        loss_aggregation: str = "mean",
+        errors_aggregation: Optional[dict[str, str]] = None,
     ) -> None:
+        self.loss_aggregation = loss_aggregation
+        self.errors_aggregation = dict(errors_aggregation or {})
+        if any(mode not in {"mean", "rmse"} for mode in [loss_aggregation, *self.errors_aggregation.values()]):
+            raise ValueError("Metric aggregation must be mean or rmse.")
         self.device = torch.device(device)
         self.keep_epochs = keep_epochs
         self.errors_names = list(errors_names)
@@ -87,6 +94,7 @@ class TrackMetrics:
         self.l2penalty: list[Optional[torch.Tensor]] = []
         self.errors: dict[str, list[Optional[torch.Tensor]]] = {name: [] for name in self.errors_names}
         self.batch_counts: list[int] = []
+        self.sample_counts: list[int] = []
 
     def new_epoch(self, epoch: Optional[int] = None) -> None:
         """Start accumulating a new epoch."""
@@ -99,6 +107,7 @@ class TrackMetrics:
         self.loss_penalty.append(None)
         self.l2penalty.append(None)
         self.batch_counts.append(0)
+        self.sample_counts.append(0)
         for key in self.errors:
             self.errors[key].append(None)
 
@@ -113,6 +122,7 @@ class TrackMetrics:
             self.loss_penalty.pop(0)
             self.l2penalty.pop(0)
             self.batch_counts.pop(0)
+            self.sample_counts.pop(0)
             for key in self.errors:
                 self.errors[key].pop(0)
 
@@ -148,13 +158,14 @@ class TrackMetrics:
         else:
             store[-1] = store[-1] + tensor
 
-    def _epoch_mean(self, values: list[Optional[torch.Tensor]], epoch: int) -> torch.Tensor:
+    def _epoch_mean(self, values: list[Optional[torch.Tensor]], epoch: int, aggregation: str = "mean") -> torch.Tensor:
         idx = self._epoch_index(epoch)
         value = values[idx]
-        count = self.batch_counts[idx]
+        count = self.sample_counts[idx]
         if value is None or count <= 0:
             return torch.tensor(0.0, device=self.device)
-        return value / count
+        mean = value / count
+        return mean.clamp_min(0).sqrt() if aggregation == "rmse" else mean
 
     def update(
         self,
@@ -162,42 +173,48 @@ class TrackMetrics:
         errors_per_task: dict[str, torch.Tensor],
         loss_penalty: torch.Tensor,
         l2_penalty: torch.Tensor | float | None = None,
+        *,
+        batch_size: int = 1,
     ) -> None:
         """Accumulate one batch of metrics for the current epoch."""
 
         self._require_epoch()
+        if not isinstance(batch_size, int) or batch_size <= 0:
+            raise ValueError("batch_size must be a positive integer.")
         missing = set(self.errors) - set(errors_per_task)
         if missing:
             raise KeyError(f"Missing error metrics: {sorted(missing)}.")
 
-        self._accumulate(self.loss_per_task, loss_per_task)
+        self._accumulate(self.loss_per_task, loss_per_task.detach() * batch_size)
         self._accumulate(self.loss_penalty, loss_penalty)
         self._accumulate(self.l2penalty, l2_penalty)
         self.batch_counts[-1] += 1
+        self.sample_counts[-1] += batch_size
 
         for key in self.errors:
-            self._accumulate(self.errors[key], errors_per_task[key])
+            self._accumulate(self.errors[key], errors_per_task[key].detach() * batch_size)
 
     def loss_epoch(self, epoch: int) -> torch.Tensor:
-        value = self._epoch_mean(self.loss_per_task, epoch)
+        value = self._epoch_mean(self.loss_per_task, epoch, self.loss_aggregation)
         return value.mean() if value.ndim > 0 else value
 
     def last_loss(self) -> torch.Tensor:
         return self.loss_epoch(-1)
 
     def info(self, epoch: int) -> dict[str, torch.Tensor]:
-        errors = {key: self._epoch_mean(values, epoch).mean() for key, values in self.errors.items()}
+        errors = {key: self._epoch_mean(values, epoch, self.errors_aggregation.get(key, "mean")).mean() for key, values in self.errors.items()}
         errors["LOSS"] = self.loss_epoch(epoch)
         return errors
 
     def for_save(self) -> dict:
         return {
             "epochs": torch.tensor(self.epoch_numbers, dtype=torch.long),
-            "loss_per_task": self.to_cpu_tensor(self.loss_per_task, self.batch_counts),
+            "sample_counts": torch.tensor(self.sample_counts, dtype=torch.long),
+            "loss_per_task": self.to_cpu_tensor(self.loss_per_task, self.sample_counts, self.loss_aggregation),
             "loss_penalty": self.to_cpu_tensor(self.loss_penalty, self.batch_counts),
             "l2penalty": self.to_cpu_tensor(self.l2penalty, self.batch_counts),
             "errors": {
-                error: self.to_cpu_tensor(values, self.batch_counts)
+                error: self.to_cpu_tensor(values, self.sample_counts, self.errors_aggregation.get(error, "mean"))
                 for error, values in self.errors.items()
             },
         }
@@ -206,6 +223,7 @@ class TrackMetrics:
     def to_cpu_tensor(
         values: list[Optional[torch.Tensor]],
         batch_counts: list[int],
+        aggregation: str = "mean",
     ) -> torch.Tensor:
         """Convert accumulated epoch sums into mean tensors on CPU."""
 
@@ -221,7 +239,8 @@ class TrackMetrics:
             zero if value is None or count <= 0 else value / count
             for value, count in zip(values, batch_counts)
         ]
-        return torch.stack(means).cpu()
+        result = torch.stack(means).cpu()
+        return result.clamp_min(0).sqrt() if aggregation == "rmse" else result
 
 
 class Tracker:
@@ -236,6 +255,9 @@ class Tracker:
         keep_epochs: Optional[int] = None,
         path: Optional[str] = None,
         config_info: Optional[dict] = None,
+        *,
+        loss_aggregation: str = "mean",
+        errors_aggregation: Optional[dict[str, str]] = None,
     ) -> None:
         self.device = torch.device(device)
         self.keep_epochs = keep_epochs
@@ -246,15 +268,24 @@ class Tracker:
         self.track = {
             "train": {
                 "timing": ElapsedTime("train"),
-                "metrics": TrackMetrics(errors_names, device=self.device, keep_epochs=self.keep_epochs),
+                "metrics": TrackMetrics(
+                    errors_names, device=self.device, keep_epochs=self.keep_epochs,
+                    loss_aggregation=loss_aggregation, errors_aggregation=errors_aggregation,
+                ),
             },
             "validation": {
                 "timing": ElapsedTime("validation"),
-                "metrics": TrackMetrics(errors_names, device=self.device, keep_epochs=self.keep_epochs),
+                "metrics": TrackMetrics(
+                    errors_names, device=self.device, keep_epochs=self.keep_epochs,
+                    loss_aggregation=loss_aggregation, errors_aggregation=errors_aggregation,
+                ),
             },
             "test": {
                 "timing": ElapsedTime("test"),
-                "metrics": TrackMetrics(errors_names, device=self.device, keep_epochs=self.keep_epochs),
+                "metrics": TrackMetrics(
+                    errors_names, device=self.device, keep_epochs=self.keep_epochs,
+                    loss_aggregation=loss_aggregation, errors_aggregation=errors_aggregation,
+                ),
             },
             "ale": {
                 "timing": ElapsedTime("ale"),
@@ -323,10 +354,12 @@ class Tracker:
         errors_per_task: dict[str, torch.Tensor],
         penalty: torch.Tensor,
         l2_penalty: Optional[torch.Tensor | float] = None,
+        *,
+        batch_size: int = 1,
     ) -> None:
         if phase not in self.METRIC_PHASES:
             raise KeyError(f"Unknown metric phase {phase!r}. Valid phases: {list(self.METRIC_PHASES)}.")
-        self.track[phase]["metrics"].update(loss_per_task, errors_per_task, penalty, l2_penalty)
+        self.track[phase]["metrics"].update(loss_per_task, errors_per_task, penalty, l2_penalty, batch_size=batch_size)
 
     # Early stopping methods ------------------------------------
     def last_val_loss(self) -> torch.Tensor:

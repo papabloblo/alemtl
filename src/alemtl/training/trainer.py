@@ -430,6 +430,8 @@ class MultiTaskTrainer:
             keep_epochs=track_epochs,
             path=logging_dir,
             config_info=config_info,
+            loss_aggregation=self.loss.loss_aggregation,
+            errors_aggregation=self.loss.errors_aggregation,
         )
 
         self.printer = _MultiTaskTrainerPrint(
@@ -625,7 +627,10 @@ class MultiTaskTrainer:
                 l2_penalty = self.loss.l2_penalty
                 total_loss = self._total_train_loss(loss_per_task, penalty, l2_penalty) if is_train else None
 
-            self.tracking.update_metrics(phase, loss_per_task, errors_per_task, penalty, l2_penalty)
+            epoch_loss, epoch_errors = self.loss.epoch_values(y, y_pred, loss_per_task, errors_per_task)
+            self.tracking.update_metrics(
+                phase, epoch_loss, epoch_errors, penalty, l2_penalty, batch_size=y.size(1),
+            )
 
             if is_train:
                 total_loss.backward()

@@ -63,6 +63,36 @@ class MultiTaskLoss:
         self.model = model
         self.errors_dict = dict(errors_fn or {})
 
+    @property
+    def loss_aggregation(self) -> str:
+        return "rmse" if self.loss_fn is rmse_loss else "mean"
+
+    @property
+    def errors_aggregation(self) -> dict[str, str]:
+        return {name: "rmse" if metric is rmse_loss else "mean"
+                for name, metric in self.errors_dict.items()}
+
+    @torch.no_grad()
+    def epoch_values(self, real: Tensor, pred: Tensor, loss: Tensor,
+                     errors: dict[str, Tensor]) -> tuple[Tensor, dict[str, Tensor]]:
+        """Return additive batch means for epoch tracking, separate from backprop.
+
+        Built-in RMSE uses mean squared error over all observations/outputs
+        per task; the tracker takes the root after aggregating the epoch.
+        Other callbacks must return batch means for sample weighting to apply.
+        """
+        if self.loss_aggregation != "rmse" and "rmse" not in self.errors_aggregation.values():
+            return loss, errors
+        # Accumulate in at least float32 even when forward uses mixed precision.
+        dtype = torch.float64 if pred.dtype == torch.float64 else torch.float32
+        squared = (pred.to(dtype) - real.to(dtype)).square()
+        mse = _reduce_per_task(squared, self.model.n_tasks, "squared error")
+        return (
+            mse if self.loss_aggregation == "rmse" else loss,
+            {name: mse if self.errors_aggregation[name] == "rmse" else value
+             for name, value in errors.items()},
+        )
+
     def update_tasks_groups(self, tasks_groups: Optional[Tensor | list[list[int]]]) -> None:
         """Set task groups used by :meth:`penalty`.
 

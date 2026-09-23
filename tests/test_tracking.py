@@ -81,3 +81,23 @@ def test_tracker_rejects_non_metric_phase_and_saves(tmp_path):
     assert (tmp_path / "metrics.pth").exists()
     assert (tmp_path / "best_model.pth").exists()
     assert (tmp_path / "config.pth").exists()
+
+
+def test_weighted_metrics_pruning_and_rmse_save():
+    metrics = TrackMetrics(["rmse", "mae"], keep_epochs=1,
+                           loss_aggregation="rmse", errors_aggregation={"rmse": "rmse"})
+    for epoch in range(2):
+        metrics.new_epoch(epoch)
+        for value, size in ((1., 4), (9., 1)):
+            metrics.update(torch.tensor([value ** 2]),
+                           {"rmse": torch.tensor([value ** 2]), "mae": torch.tensor([value])},
+                           torch.zeros(1), batch_size=size)
+    assert metrics.sample_counts == [5]
+    assert metrics.batch_counts == [2]
+    assert metrics.epoch_numbers == [1]
+    torch.testing.assert_close(metrics.info(1)["rmse"], torch.tensor(17.).sqrt())
+    torch.testing.assert_close(metrics.info(1)["mae"], torch.tensor(2.6))
+    torch.testing.assert_close(metrics.for_save()["loss_per_task"], torch.tensor([[17.]]).sqrt())
+    with pytest.raises(ValueError, match="batch_size"):
+        metrics.update(torch.ones(1), {"rmse": torch.ones(1), "mae": torch.ones(1)}, torch.zeros(1), batch_size=0)
+    assert metrics.sample_counts == [5]
