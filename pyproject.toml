@@ -10,8 +10,6 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "BSD-3-Clause"
 license-files = ["LICENSE.txt"]
-# TODO: Replace these placeholder people with the final author and maintainer
-# metadata before tagging the SoftwareX release.
 authors = [
     { name = "Pablo Hidalgo", email = "pablo.hidalgo@ufv.es" },
 ]
@@ -47,13 +45,11 @@ dependencies = [
 ]
 
 [project.urls]
-# TODO: Replace these valid placeholder URLs with the final public project URLs.
 Homepage = "https://github.com/papabloblo/alemtl"
 Repository = "https://github.com/papabloblo/alemtl"
-Documentation = "https://papabloblo.github.io/alemtl/"
+Documentation = "https://github.com/papabloblo/alemtl/README.md"
 "Bug Tracker" = "https://github.com/papabloblo/alemtl/issues"
 Changelog = "https://github.com/papabloblo/alemtl/releases"
-"Archived Release" = "https://doi.org/10.0000/zenodo.todo"
 
 [project.optional-dependencies]
 dev = [
