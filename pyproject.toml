@@ -12,8 +12,8 @@ license = "BSD-3-Clause"
 license-files = ["LICENSE.txt"]
 authors = [
     { name = "Pablo Hidalgo", email = "pablo.hidalgo@ufv.es" },
-    { name = "Adrián Domínguez-Díaz", email = "adrian.dominguez-diaz@ufv.es" },
-    { name = "Daniel Rodriguez", email = "daniel.rodriguez@ufv.es" },
+    { name = "Adrián Domínguez-Díaz", email = "adrian.dominguez@uah.es" },
+    { name = "Daniel Rodriguez", email = "daniel.rodriguez@uah.es" },
 ]
 maintainers = [
     { name = "Pablo Hidalgo", email = "pablo.hidalgo@ufv.es" },
