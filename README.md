@@ -61,8 +61,8 @@ tests/             # pytest regression tests
 
 ## Installation
 
-The project uses a standard `src/` layout and can be installed in editable mode
-from the repository root.
+The project uses a standard `src/` layout. For normal use, install from the
+repository root:
 
 ```bash
 python -m venv .venv
@@ -71,10 +71,11 @@ pip install --upgrade pip
 pip install .
 ```
 
-Validate the installation:
+For development and testing, install the test tools with an editable install:
 
 ```bash
-pytest -q
+python -m pip install -e ".[dev]"
+python -m pytest -q
 ```
 
 The test suite should complete without failures.
@@ -176,9 +177,10 @@ The notebooks are designed as guided, executable companions to the examples:
 - `notebooks/03_training_with_alefrechet.ipynb`: training with scheduled ALE and
   similarity-derived task groups.
 
-Launch them with:
+Install the notebook tools and launch them with:
 
 ```bash
+python -m pip install -e ".[notebooks]"
 jupyter lab notebooks/
 ```
 
@@ -217,15 +219,29 @@ The tests cover:
 ALE-MTL is distributed under the BSD 3-Clause License. See `LICENSE.txt` for the
 full license text.
 
-## Reproducibility Notes
+## Reproduce the manuscript
 
-- All examples use synthetic data and fixed random seeds where practical.
-- The default examples avoid filesystem logging and external datasets.
-- The current verified command is:
+From the source repository or the source archive in the supplementary bundle,
+install the publication tools and run:
 
 ```bash
-pytest -q
+python -m pip install -e ".[publication]"
+python examples/reproduce_revised_table.py --output results/table.tex
+python examples/reproduce_nonlinear_figures.py --output results/nonlinear_figures
+python examples/custom_similarity.py --checkpoint results/nonlinear_figures/checkpoint.pt
 ```
+
+The table uses synthetic data and the Wine and Breast Cancer datasets bundled
+with scikit-learn; these workflows require no external dataset download.
+For a short pipeline check, add `--smoke` to the table command. Smoke results
+are not publication results.
+
+See [the reproduction guide](docs/examples.rst) for settings and reference
+runtimes, [the installation guide](docs/installation.rst) for the isolated
+wheel workflow, and [the tested requirements](requirements/softwarex.txt) for
+the reference environment. The manuscript's supplementary bundle
+`alemtl-softwarex-submission.zip` contains the verification report and checksums
+for that specific snapshot; subsequent source changes need new verification.
 
 ## Contributing
 
