@@ -12,6 +12,8 @@ license = "BSD-3-Clause"
 license-files = ["LICENSE.txt"]
 authors = [
     { name = "Pablo Hidalgo", email = "pablo.hidalgo@ufv.es" },
+    { name = "Adrián Domínguez-Díaz", email = "adrian.dominguez-diaz@ufv.es" },
+    { name = "Daniel Rodriguez", email = "daniel.rodriguez@ufv.es" },
 ]
 maintainers = [
     { name = "Pablo Hidalgo", email = "pablo.hidalgo@ufv.es" },
@@ -25,7 +27,7 @@ keywords = [
     "task-similarity",
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
