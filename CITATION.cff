@@ -10,14 +10,13 @@ type: software
 authors:
   - family-names: Hidalgo
     given-names: Pablo
-  - family-names: Rodriguez
-    given-names: Daniel
   - family-names: Domínguez-Díaz
     given-names: Adrián
+  - family-names: Rodriguez
+    given-names: Daniel
 
 version: 0.1.0
-date-released: 2026-07-17
+date-released: 2026-09-28
 repository-code: https://github.com/papabloblo/alemtl
 url: https://github.com/papabloblo/alemtl/releases/tag/v0.1.0
-doi: 10.5281/zenodo.[VERSION DOI]
 license: BSD-3-Clause
