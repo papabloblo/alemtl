@@ -758,8 +758,8 @@ class MultiTaskALE:
             Optional limit on processed batches. Use this for quick previews or
             tests. ``None`` processes the entire dataloader.
 
-        Side effects
-        ------------
+        Notes
+        -----
         Updates ``g_ale_per_feature`` and ``cardinality`` in place. Repeated
         calls keep accumulating; they do not reset previous values. Use this
         only while the model is unchanged. Use :meth:`recompute` after model
