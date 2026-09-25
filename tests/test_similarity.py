@@ -1,7 +1,7 @@
 import math
 
-import torch
 import pytest
+import torch
 
 from alemtl.similarity.similarity import (
     MultitaskSimilarity,
@@ -40,8 +40,9 @@ def test_discrete_frechet_includes_starting_distance(swap_curves):
 
     expected = torch.tensor(10.0)
     torch.testing.assert_close(discrete_frechet_distance_vectorized(curve0, curve1), expected)
-    for similarity_fn in (frechet_similarity_vectorized, frechet_distance_vectorized):
-        torch.testing.assert_close(similarity_fn(curve0, curve1), torch.exp(-expected))
+    torch.testing.assert_close(frechet_similarity_vectorized(curve0, curve1), torch.exp(-expected))
+    with pytest.warns(DeprecationWarning, match="frechet_distance_vectorized is deprecated"):
+        torch.testing.assert_close(frechet_distance_vectorized(curve0, curve1), torch.exp(-expected))
 
 
 @pytest.mark.parametrize("n_points", [1, 2, 3, 7])
@@ -87,12 +88,28 @@ def test_discrete_frechet_distance_and_compat_similarity():
     shifted = torch.tensor([[0.0, 1.0], [1.0, 2.0]])
 
     distance = discrete_frechet_distance_vectorized(curve, curve)
-    similarity = frechet_distance_vectorized(curve, curve)
-    shifted_similarity = frechet_distance_vectorized(curve, shifted)
+    similarity = frechet_similarity_vectorized(curve, curve)
+    shifted_similarity = frechet_similarity_vectorized(curve, shifted)
 
     assert distance.item() == 0.0
     assert similarity.item() == 1.0
     assert shifted_similarity.item() < similarity.item()
+
+    with pytest.warns(DeprecationWarning, match="frechet_distance_vectorized is deprecated"):
+        compatibility_similarity = frechet_distance_vectorized(curve, curve)
+    torch.testing.assert_close(compatibility_similarity, similarity)
+
+
+def test_multitask_similarity_uses_explicit_similarity_default():
+    x = torch.linspace(0, 1, steps=4)
+    curves = torch.zeros(2, 1, 4, 2)
+    curves[:, :, :, 0] = x
+    curves[0, :, :, 1] = x
+    curves[1, :, :, 1] = x + 0.1
+
+    similarity = MultitaskSimilarity(DummyALE(curves))
+
+    assert similarity.similarity_func is frechet_similarity_vectorized
 
 
 def test_multitask_similarity_handles_multioutput_curves():
