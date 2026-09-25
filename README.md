@@ -1,14 +1,10 @@
-# ALE-MTL: Accumulated Local Effects for Multi-task Learning
+# ALEMTL: Accumulated Local Effects for Multi-Task Learning
 
-ALE-MTL is a Python/PyTorch toolkit for building, training, explaining, and
-comparing multi-task learning models. The software focuses on a workflow where
-task-specific model behavior is summarized with Accumulated Local Effects (ALE)
-profiles and task relationships are estimated with curve similarity, including a
-Frechet-based similarity score.
-
-ALEMTL is a Python library for computing interpretable ALE–Fréchet
-task similarities and integrating them into deep multi-task learning
-workflows.
+ALEMTL is an open-source Python/PyTorch library for explainable
+similarity-driven multi-task learning. It computes task-wise Accumulated
+Local Effects (ALE) profiles, derives interpretable task similarities from
+their functional behavior, and can use these similarities to guide soft
+parameter sharing during training.
 
 ## Statement of Need
 
@@ -37,8 +33,7 @@ models and interpretable task relationship estimates.
 - **Task similarity**: vectorized discrete Frechet curve comparison and nearest
   task grouping.
 - **Training utilities**: per-task loss tracking, similarity-weighted
-  regularization, ALE/similarity scheduling, early stopping, and checkpointable
-  metrics.
+  regularization, ALE/similarity scheduling, early stopping, checkpointing, and task-wise metric tracking.
 - **Baseline models**: soft sharing, single-task MLP, hard sharing, MMoE,
   Cross-Stitch, PLE, and MTAN-style tabular baselines.
 - **Executable examples and notebooks** for reproducible demonstrations.
@@ -61,21 +56,21 @@ tests/             # pytest regression tests
 
 ## Installation
 
-The project uses a standard `src/` layout. For normal use, install from the
-repository root:
+ALEMTL requires Python >= 3.10.
+
+Install the stable v0.1.0 release directly from GitHub:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip
-pip install .
+pip install "alemtl @ git+https://github.com/papabloblo/alemtl.git@v0.1.0"
 ```
 
 For development and testing, install the test tools with an editable install:
 
 ```bash
+git clone https://github.com/papabloblo/alemtl.git
+cd alemtl
 python -m pip install -e ".[dev]"
-python -m pytest -q
+pytest -q
 ```
 
 The test suite should complete without failures.
@@ -219,29 +214,45 @@ The tests cover:
 ALE-MTL is distributed under the BSD 3-Clause License. See `LICENSE.txt` for the
 full license text.
 
-## Reproduce the manuscript
+## Reproducing the SoftwareX examples
 
-From the source repository or the source archive in the supplementary bundle,
-install the publication tools and run:
+The numerical table and illustrative figures reported in the SoftwareX
+article can be regenerated from the repository:
 
 ```bash
 python -m pip install -e ".[publication]"
-python examples/reproduce_revised_table.py --output results/table.tex
-python examples/reproduce_nonlinear_figures.py --output results/nonlinear_figures
-python examples/custom_similarity.py --checkpoint results/nonlinear_figures/checkpoint.pt
+
+python examples/reproduce_revised_table.py \
+    --output results/table.tex
+
+python examples/reproduce_nonlinear_figures.py \
+    --output results/nonlinear_figures
+
+python examples/custom_similarity.py \
+    --checkpoint results/nonlinear_figures/checkpoint.pt
 ```
 
-The table uses synthetic data and the Wine and Breast Cancer datasets bundled
-with scikit-learn; these workflows require no external dataset download.
-For a short pipeline check, add `--smoke` to the table command. Smoke results
-are not publication results.
+The examples use synthetic datasets together with the Wine and Breast
+Cancer datasets distributed through scikit-learn and therefore require no
+additional dataset downloads.
 
-See [the reproduction guide](docs/examples.rst) for settings and reference
-runtimes, [the installation guide](docs/installation.rst) for the isolated
-wheel workflow, and [the tested requirements](requirements/softwarex.txt) for
-the reference environment. The manuscript's supplementary bundle
-`alemtl-softwarex-submission.zip` contains the verification report and checksums
-for that specific snapshot; subsequent source changes need new verification.
+See `docs/examples.rst` for the complete reproduction protocol and reference
+runtimes, and `requirements/softwarex.txt` for the tested SoftwareX
+environment.
+
+## Release and reproducibility
+
+The SoftwareX article corresponds to ALEMTL v0.1.0.
+
+- Source release: https://github.com/papabloblo/alemtl/releases/tag/v0.1.0
+- Archived release: https://doi.org/<VERSION_DOI>
+- Documentation: https://github.com/papabloblo/alemtl/tree/v0.1.0/docs
+- Python: >= 3.10
+- Tested in CI: Python 3.10, 3.11, 3.12, and 3.13
+
+The supplementary SoftwareX archive contains the source distribution,
+wheel, verification logs, generated outputs, and checksums corresponding
+to the archived release.
 
 ## Contributing
 
