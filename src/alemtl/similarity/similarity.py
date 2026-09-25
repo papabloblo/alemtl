@@ -116,15 +116,21 @@ def frechet_similarity_vectorized(curve0: torch.Tensor, curve1: torch.Tensor) ->
 
 
 def frechet_distance_vectorized(curve0: torch.Tensor, curve1: torch.Tensor) -> torch.Tensor:
-    """Backward-compatible Frechet similarity helper.
+    """Deprecated compatibility alias for :func:`frechet_similarity_vectorized`.
 
-    Historically this function was named like a distance but returned
-    ``exp(-distance)``. The behavior is preserved because
-    :class:`MultitaskSimilarity` and the trainer select nearest tasks by taking
-    the maximum score. Use :func:`discrete_frechet_distance_vectorized` if you
-    need the raw distance.
+    This historical function name is misleading because it returns
+    ``exp(-distance)`` rather than a distance. New code should use
+    :func:`frechet_similarity_vectorized` for similarity scores or
+    :func:`discrete_frechet_distance_vectorized` for the raw distance.
     """
 
+    warnings.warn(
+        "frechet_distance_vectorized is deprecated because it returns a similarity score, "
+        "not a distance. Use frechet_similarity_vectorized for similarity scores or "
+        "discrete_frechet_distance_vectorized for raw distances.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return frechet_similarity_vectorized(curve0, curve1)
 
 
@@ -139,12 +145,10 @@ class MultitaskSimilarity:
     similarity_func:
         Function comparing two batches of 2D curves. It must accept tensors with
         shape ``(batch, I, 2)`` and return one score per batch item. Higher
-        scores must mean more similar tasks.
+        scores must mean more similar tasks. The default is
+        :func:`frechet_similarity_vectorized`.
     centered, cumulative, std, spline:
         Options forwarded to ``ale_curves(...)``.
-    complete:
-        If ``True``, compute every upper-triangular task pair. If ``False``,
-        currently behaves the same; the argument is kept for API compatibility.
     output_reduction:
         How to combine per-output similarities when ALE has more than one model
         output. ``"mean"`` is scale-stable, ``"sum"`` weights multi-output
@@ -162,11 +166,10 @@ class MultitaskSimilarity:
     def __init__(
         self,
         ale_curves: MultiTaskALE,
-        similarity_func: SimilarityFunction = frechet_distance_vectorized,
+        similarity_func: SimilarityFunction = frechet_similarity_vectorized,
         centered: bool = True,
         cumulative: bool = True,
         std: Optional[float] = 1.0,
-        complete: bool = True,
         spline: bool = False,
         output_reduction: SimilarityReduction = "mean",
         spline_smooth: float = 1.0,
@@ -181,7 +184,6 @@ class MultitaskSimilarity:
         self.centered = bool(centered)
         self.cumulative = bool(cumulative)
         self.std = std
-        self.complete = bool(complete)
         self.spline = bool(spline)
         self.spline_smooth = float(spline_smooth)
 
