@@ -15,6 +15,20 @@ Use the baseline models in :mod:`alemtl.models.baselines` when comparing against
 standard multitask architectures such as hard sharing, soft sharing, MMoE,
 Cross-Stitch, PLE, or MTAN-style tabular models.
 
+These are tabular adaptations, not reproductions of the original image
+architectures. Task batches may contain independent, unaligned observations.
+In evaluation mode, prediction for task ``t`` depends only on ``X[t]``.
+Cross-Stitch and PLE evaluate all internal streams on each query observation
+and select its task head, rather than mixing unrelated rows across tasks.
+This evaluates additional streams and increases computation as tasks grow.
+MTAN applies a task-specific attention gate after each shared MLP layer and
+passes the gated activation to the next layer. It is a sequential gated MLP,
+not the original multi-scale image architecture.
+
+These corrections change predictions from earlier Cross-Stitch, PLE, and MTAN
+implementations; experiments using those models must be rerun. The manuscript
+table uses ST, Hard, Soft, and ALE--Frechet and is unaffected by these changes.
+
 Load Task-First Data
 --------------------
 

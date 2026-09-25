@@ -1,0 +1,12 @@
+# Tested direct dependencies for the SoftwareX CPU examples on Python 3.12.14.
+# Transitive dependencies are recorded in the verification report.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.14.0+cpu
+torchvision==0.29.0+cpu
+numpy==2.3.5
+scipy==1.18.1
+scikit-learn==1.9.1
+pandas==2.2.3
+Pillow==12.3.0
+matplotlib==3.11.2
+pytest==9.1.1

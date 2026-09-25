@@ -15,3 +15,6 @@ prune docs/_build
 global-exclude *.py[cod]
 global-exclude __pycache__
 global-exclude .DS_Store
+recursive-include requirements *.txt
+recursive-include .github *.yml
+recursive-include docs .gitkeep

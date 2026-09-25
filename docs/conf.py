@@ -6,7 +6,9 @@ import os
 import sys
 from datetime import date
 
-sys.path.insert(0, os.path.abspath("../src"))
+# CI builds against the installed wheel; local builds use the source tree.
+if not os.environ.get("ALEMTL_DOCS_INSTALLED"):
+    sys.path.insert(0, os.path.abspath("../src"))
 
 project = "ALE-MTL"
 author = "ALE-MTL contributors"
