@@ -155,3 +155,54 @@ def test_baseline_training_compatibility_with_multitask_trainer(name, model_fact
     assert len(trainer.tracking.track["validation"]["metrics"].batch_counts) == 1
     assert len(trainer.tracking.track["test"]["metrics"].batch_counts) == 1
     capsys.readouterr()
+
+
+@pytest.mark.parametrize(("name", "model_factory"), _baseline_cases())
+def test_predictions_do_not_depend_on_other_tasks_observations(name, model_factory):
+    torch.manual_seed(42)
+    model = model_factory().eval()
+    # Exercise learned cross-task mixing, not just identity initialization.
+    if isinstance(model, CrossStitch):
+        with torch.no_grad():
+            for mixing in model.cross:
+                mixing.fill_(0.25)
+    X = torch.randn(N_TASKS, BATCH, INPUT_DIM)
+    changed = X.clone()
+    changed[1:] += 5
+    with torch.no_grad():
+        expected = model(X)[0]
+        actual = model(changed)[0]
+    torch.testing.assert_close(actual, expected)
+
+
+@pytest.mark.parametrize(("name", "model_factory"), _baseline_cases())
+def test_task_rows_can_be_permuted_independently(name, model_factory):
+    torch.manual_seed(43)
+    model = model_factory().eval()
+    if isinstance(model, CrossStitch):
+        with torch.no_grad():
+            for mixing in model.cross:
+                mixing.fill_(0.25)
+    X = torch.randn(N_TASKS, BATCH, INPUT_DIM)
+    permutation = torch.tensor([2, 4, 0, 1, 3])
+    changed = X.clone()
+    changed[0] = X[0, permutation]
+    with torch.no_grad():
+        expected = model(X)
+        expected[0] = expected[0, permutation]
+        actual = model(changed)
+    torch.testing.assert_close(actual, expected)
+
+
+def test_mtan_all_attention_layers_receive_nonzero_gradients():
+    torch.manual_seed(44)
+    model = MTAN(3, INPUT_DIM, (7, 6, 5), OUTPUT_DIM, activation="tanh")
+    X = torch.randn(3, BATCH, INPUT_DIM)
+    target = torch.randn(3, BATCH, OUTPUT_DIM)
+    nn.MSELoss()(model(X), target).backward()
+    for layer in model.attn:
+        for task_gate in layer:
+            for parameter in task_gate.parameters():
+                assert parameter.grad is not None
+                assert torch.isfinite(parameter.grad).all()
+                assert parameter.grad.abs().sum() > 0

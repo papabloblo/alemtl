@@ -18,8 +18,11 @@ Implemented baselines
 * ``PLE``          : Progressive Layered Extraction / CGC (Tang et al., 2020).
 * ``MTAN``         : Multi-Task Attention Network (Liu et al., 2019).
 
-These are widely used baselines for MTL comparisons and should be sufficient
-for a first experimental section.
+The tabular adaptations accept independent observations for each task. In
+evaluation mode, prediction for task t depends only on X[t]. Cross-Stitch and
+PLE evaluate all internal streams on each query observation before selecting
+its task head; streams share representations, not unrelated batch rows. MTAN
+is a sequential attention-gated MLP adaptation, not the original image model.
 """
 
 from __future__ import annotations
@@ -301,7 +304,9 @@ class CrossStitch(_MTLBase):
         if X.size(0) != self.n_tasks:
             raise ValueError(f"Expected X.size(0)=={self.n_tasks}, got {X.size(0)}")
 
-        h = [X[t] for t in range(self.n_tasks)]  # list of (batch, dim)
+        # Evaluate every stream on the same query, including unaligned tasks.
+        queries = X.flatten(0, 1)
+        h = [queries for _ in range(self.n_tasks)]
         for li in range(len(self.task_linears)):
             # independent transform
             z = []
@@ -321,7 +326,10 @@ class CrossStitch(_MTLBase):
                 mixed.append(acc)
             h = mixed
 
-        outs = [self.heads[t](h[t]) for t in range(self.n_tasks)]
+        outs = [
+            self.heads[t](h[t]).reshape(self.n_tasks, X.size(1), -1)[t]
+            for t in range(self.n_tasks)
+        ]
         return torch.stack(outs, dim=0)
 
 
@@ -387,14 +395,18 @@ class PLE(_MTLBase):
         if X.size(0) != self.n_tasks:
             raise ValueError(f"Expected X.size(0)=={self.n_tasks}, got {X.size(0)}")
 
-        # Representations for each task + shared stream
-        reps_t = [X[t] for t in range(self.n_tasks)]
-        rep_s = X.mean(dim=0)  # (batch, dim)
+        # All expert streams process each query; task batches need not align.
+        queries = X.flatten(0, 1)
+        reps_t = [queries for _ in range(self.n_tasks)]
+        rep_s = queries
 
         for layer in self.cgc_layers:
             reps_t, rep_s = layer(reps_t, rep_s)
 
-        outs = [self.towers[t](reps_t[t]) for t in range(self.n_tasks)]
+        outs = [
+            self.towers[t](reps_t[t]).reshape(self.n_tasks, X.size(1), -1)[t]
+            for t in range(self.n_tasks)
+        ]
         return torch.stack(outs, dim=0)
 
 
@@ -402,7 +414,9 @@ class MTAN(_MTLBase):
     """Multi-Task Attention Network (MTAN) for tabular/MLP backbones.
 
     MTAN uses a shared backbone and applies *task-specific attention masks*
-    to shared representations.
+    to each layer of an MLP with shared weights. Gated activations feed the
+    next layer. This sequential tabular adaptation does not reproduce the
+    original image architecture or require aligned task observations.
 
     Reference: Liu et al., "End-to-End Multi-Task Learning with Attention", 2019.
     """
@@ -454,23 +468,17 @@ class MTAN(_MTLBase):
         if X.size(0) != self.n_tasks:
             raise ValueError(f"Expected X.size(0)=={self.n_tasks}, got {X.size(0)}")
 
-        # Shared input: average across tasks (common in tabular MTL when tasks share covariates)
-        h = X.mean(dim=0)  # (batch, dim)
-
-        # Track last attentive representation per task
-        h_task = [h for _ in range(self.n_tasks)]
-
-        for li in range(len(self.shared_linears)):
-            h = self.shared_linears[li](h)
-            h = self.shared_acts[li](h)
-            h = self.shared_drop[li](h)
-
-            # Attention masks per task over the shared representation
-            for t in range(self.n_tasks):
-                mask = self.attn[li][t](h)
-                h_task[t] = h * mask
-
-        outs = [self.towers[t](h_task[t]) for t in range(self.n_tasks)]
+        # Shared weights process each task's own observations. Every gated
+        # representation feeds the next layer, so intermediate masks train.
+        outs = []
+        for t in range(self.n_tasks):
+            h = X[t]
+            for li in range(len(self.shared_linears)):
+                h = self.shared_linears[li](h)
+                h = self.shared_acts[li](h)
+                h = self.shared_drop[li](h)
+                h = h * self.attn[li][t](h)
+            outs.append(self.towers[t](h))
         return torch.stack(outs, dim=0)
 
 
