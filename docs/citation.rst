@@ -4,31 +4,46 @@ Citation
 Software Citation
 -----------------
 
-Machine-readable citation metadata is stored in ``CITATION.cff`` at the
-repository root. Until the formal SoftwareX release is available, cite the archived software release and, once available, the associated
-SoftwareX article.
+Machine-readable citation metadata for ALEMTL are provided in
+``CITATION.cff`` at the repository root.
 
-The current provisional citation metadata contains:
+The SoftwareX submission corresponds to ALEMTL version 0.1.0. When using the
+software in research, cite the archived software release and, once published,
+the associated SoftwareX article.
+
+The software citation metadata include:
 
 * software title;
-* version;
-* BSD-3-Clause license;
-* contributor placeholder;
-* abstract and keywords.
-
-Before Publication
-------------------
-
-Update ``CITATION.cff`` with:
-
-* final author list;
-* repository URL;
+* authors;
+* software version;
 * release date;
-* archive DOI;
-* preferred SoftwareX article citation.
+* source repository;
+* BSD-3-Clause license;
+* archived software identifier, when available.
+
+The canonical source repository is:
+
+https://github.com/papabloblo/alemtl
+
+The permanent version DOI assigned to the archived v0.1.0 release should be
+preferred over the mutable repository URL when citing the exact software version
+used in the SoftwareX article.
+
+Associated Publication
+----------------------
+
+ALEMTL accompanies the SoftwareX article:
+
+``ALEMTL: A PyTorch package for explainable similarity-driven multi-task
+learning``
+
+Once the article DOI is assigned, it can be cited together with the archived
+software release. The software DOI identifies the executable research artifact,
+whereas the article describes its motivation, architecture, illustrative
+workflows, and scientific impact.
 
 License
 -------
 
-ALE-MTL is distributed under the BSD 3-Clause License. The full license text is
-available in ``LICENSE``.
+ALEMTL is distributed under the BSD 3-Clause License. The complete license text
+is available in ``LICENSE.txt``.
