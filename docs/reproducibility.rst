@@ -35,18 +35,19 @@ Reproducing the SoftwareX Examples
 
 The main numerical comparison reported in the article can be reproduced with::
 
-   python examples/reproduce_revised_table.py 
-       --workers 2 
+   python examples/reproduce_revised_table.py \
+       --workers 2 \
        --output results/table.tex
 
 The nonlinear ALE and task-similarity figures can be generated with::
 
-   python examples/reproduce_nonlinear_figures.py 
+
+   python examples/reproduce_nonlinear_figures.py \
        --output results/nonlinear_figures
 
 The alternative curve-comparison example can then be executed with::
 
-   python examples/custom_similarity.py 
+   python examples/custom_similarity.py \
        --checkpoint results/nonlinear_figures/checkpoint.pt
 
 Detailed experimental settings, datasets, random seeds, validation procedures,
