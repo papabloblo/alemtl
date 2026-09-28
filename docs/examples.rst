@@ -207,10 +207,12 @@ Release and archival record
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The SoftwareX article corresponds to ALEMTL version 0.1.0. The exact
-software snapshot is identified by the ``v0.1.0`` Git tag and its permanent
-archival DOI.
+software snapshot is identified by the ``v0.1.0`` Git tag and archived
+permanently on Zenodo:
 
-The release archive contains the same reproduction scripts used for the
+https://doi.org/10.5281/zenodo.23011704
+
+The archived release contains the reproduction scripts used for the
 numerical table and illustrative figures described above.
 
 Dataset and software references

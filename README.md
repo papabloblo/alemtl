@@ -245,7 +245,7 @@ environment.
 The SoftwareX article corresponds to ALEMTL v0.1.0.
 
 - Source release: https://github.com/papabloblo/alemtl/releases/tag/v0.1.0
-- Archived release: https://doi.org/<VERSION_DOI>
+- Archived release: https://doi.org/10.5281/zenodo.23011704
 - Documentation: https://github.com/papabloblo/alemtl/tree/v0.1.0/docs
 - Python: >= 3.10
 - Tested in CI: Python 3.10, 3.11, 3.12, and 3.13
@@ -274,6 +274,6 @@ When using ALEMTL, cite the archived software release:
 Hidalgo, P., Domínguez-Díaz, A., and Rodriguez, D. (2026).
 ALEMTL: A PyTorch package for explainable similarity-driven
 multi-task learning, version 0.1.0. Zenodo.
-https://doi.org/10.5281/zenodo.[VERSION DOI]
+https://doi.org/10.5281/zenodo.23011704
 
 The machine-readable citation is available in `CITATION.cff`.
