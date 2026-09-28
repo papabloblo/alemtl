@@ -34,6 +34,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
@@ -49,7 +50,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/papabloblo/alemtl"
 Repository = "https://github.com/papabloblo/alemtl"
-Documentation = "https://github.com/papabloblo/alemtl/README.md"
+Documentation = "https://github.com/papabloblo/alemtl/tree/v0.1.0/docs"
 "Bug Tracker" = "https://github.com/papabloblo/alemtl/issues"
 Changelog = "https://github.com/papabloblo/alemtl/releases"
 
