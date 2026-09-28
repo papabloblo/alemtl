@@ -10,7 +10,7 @@ parameter sharing during training.
 
 Multi-task learning (MTL) models can share representations across related tasks,
 but deciding which tasks should share parameters is often treated as a fixed
-design choice. ALE-MTL provides reusable software components for:
+design choice. ALEMTL provides reusable software components for:
 
 - constructing hard-shared and soft-shared MTL architectures;
 - computing task-wise ALE profiles on a selected model slice;
@@ -211,7 +211,7 @@ The tests cover:
 
 ## License
 
-ALE-MTL is distributed under the BSD 3-Clause License. See `LICENSE.txt` for the
+ALEMTL is distributed under the BSD 3-Clause License. See `LICENSE.txt` for the
 full license text.
 
 ## Reproducing the SoftwareX examples
