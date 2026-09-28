@@ -271,7 +271,7 @@ python -m examples.train_alefrechet
 
 When using ALEMTL, cite the archived software release:
 
-Hidalgo, P., Rodriguez, D., and Domínguez-Díaz, A. (2026).
+Hidalgo, P., Domínguez-Díaz, A., and Rodriguez, D. (2026).
 ALEMTL: A PyTorch package for explainable similarity-driven
 multi-task learning, version 0.1.0. Zenodo.
 https://doi.org/10.5281/zenodo.[VERSION DOI]
