@@ -3,7 +3,7 @@ Examples
 
 The ``examples/`` directory contains executable scripts that use synthetic data
 and fixed random seeds where practical. Run commands from the repository root
-after installing ALE-MTL.
+after installing ALEMTL.
 
 Quickstart Multisine
 --------------------
@@ -203,14 +203,15 @@ also used pandas 2.2.3; the table-only script does not import pandas. Two worker
 processes each use one CPU thread. Other library versions and platforms may
 produce floating-point differences.
 
-Release status
-~~~~~~~~~~~~~~
+Release and archival record
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The table was verified using the packaged local submission candidate. No public
-archived release identifier has yet been assigned to this reproduction script.
-Before submission, archive a release containing this script and record its
-actual version DOI in ``CITATION.cff`` and the manuscript software citation.
-The existing DOI placeholder is not a valid archival reference.
+The SoftwareX article corresponds to ALEMTL version 0.1.0. The exact
+software snapshot is identified by the ``v0.1.0`` Git tag and its permanent
+archival DOI.
+
+The release archive contains the same reproduction scripts used for the
+numerical table and illustrative figures described above.
 
 Dataset and software references
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
