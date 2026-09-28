@@ -290,7 +290,12 @@ Tasks 1 and 2. This lets a user inspect sensitivity to the comparison rule
 without retraining. The scores are not calibrated across metrics; an increase
 in their numerical value does not demonstrate improved prediction.
 
-For this checkpoint, both metrics retain the same six nearest-peer assignments. For Tasks 1 and 2, both identify feature 4 as the most similar profile and feature 1 as the least similar. The pairing is unchanged under this alternative comparison rule. Both metrics compare the same normalized curves geometrically, so this is a limited sensitivity check rather than evidence of stability across datasets or seeds.
+For this checkpoint, both metrics retain the same six nearest-peer assignments.
+For Tasks 1 and 2, both identify feature 4 as the most similar profile and
+feature 1 as the least similar. The pairing is unchanged under this alternative
+comparison rule. Both metrics compare the same normalized curves geometrically,
+so this is a limited sensitivity check rather than evidence of stability
+across datasets or seeds.
 
 The checkpoint was trained with similarity-aware sharing. The displayed profiles
 and pairings illustrate that fitted workflow; they do not independently validate
@@ -303,38 +308,36 @@ demonstration, not evidence for preferring the alternative metric in application
 Submission-candidate verification
 ---------------------------------
 
-The original package check reused installed dependencies. A subsequent check on
-25 September 2026 created a new Python 3.12.3 virtual environment without access
-to system site packages, downloaded the pinned dependencies from PyPI and the
-PyTorch CPU index without using the pip cache, and installed the distributed
-wheel. ``pip check`` reported no broken requirements and all 72 tests passed.
-The tests and examples were extracted from the source distribution and executed
-without a development ``src/`` directory or ``PYTHONPATH`` override.
-Full execution results are recorded in the accompanying verification report.
+The ALEMTL distribution is verified from the built wheel rather than from an
+editable source-tree installation. The verification workflow builds the source
+distribution and wheel, checks their package metadata, installs the wheel in a
+clean environment, runs the complete test suite against the installed package,
+and executes representative SoftwareX reproduction workflows.
 
-The supplementary bundle ``alemtl-softwarex-submission.zip`` contains the source
-archive, wheel, scripts (inside the source archive), logs, SHA-256 checksums and
-verification reports. The bundle must be attached to the submission. It is a
-local artifact, not a published GitHub release. The public release and the three
-article-specific example URLs returned HTTP 404 when checked on 25 September
-2026; upload the verified snapshot before presenting those URLs as available.
+GitHub Actions performs these checks on Ubuntu with Python 3.10, 3.11, 3.12,
+and 3.13. A dedicated Python 3.12 distribution job additionally installs the
+built wheel outside the repository source tree, checks the installed
+dependencies, executes the table smoke workflow, regenerates the nonlinear
+figures, runs the custom-similarity example, and builds the Sphinx documentation
+with warnings treated as errors.
 
-``requirements/softwarex.txt`` records the tested direct dependency versions,
-including CPU PyTorch. It is not a complete transitive lock file. The verification
-report records the installed dependency versions used for the checks.
+The reference SoftwareX numerical environment is specified separately in
+``requirements/softwarex.txt``. This file records the tested direct dependency
+versions used for the numerical examples; the verification logs record the
+complete installed environment.
 
-On an Intel Core i7-8700 CPU, one full table execution took 193.22 seconds
-(two workers, one CPU thread each). The complete six-fit figure workflow took
-12.07 seconds (one worker, one CPU thread). Times include interpreter startup
-and output generation but exclude installation. These are single-run wall times,
-not performance benchmarks. All 20 means and standard deviations matched the
-manuscript at reported precision; explanation arrays matched the prior figure
-run exactly. All 72 tests passed against the installed package.
+The final SoftwareX supplementary bundle should be generated from the same
+commit used for the ``v0.1.0`` release. It contains the source distribution,
+wheel, verification logs, generated outputs, environment information, source
+commit identifier, and SHA-256 checksums. This ensures that the software
+archive, reproducibility evidence, and manuscript all refer to the same
+immutable software snapshot.
 
-The full table command is::
+The full numerical table can be regenerated with::
 
-   python examples/reproduce_revised_table.py --workers 2 --output results/table.tex
+   python examples/reproduce_revised_table.py
+       --workers 2
+       --output results/table.tex
 
-Use a new output path if a result already exists. ``--smoke`` is a reduced
-pipeline check and does not reproduce manuscript values. Neither table command
-exports any artifact besides the requested LaTeX table.
+A reduced ``--smoke`` execution verifies the workflow but does not reproduce
+the numerical values reported in the article.
